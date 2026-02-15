@@ -9,8 +9,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath("com.android.tools.build:gradle:8.13.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
     }
 }
 
@@ -27,9 +27,21 @@ apply plugin: "kotlin-android"
 android {
     namespace 'com.mr.flutter.plugin.filepicker' 
     compileSdk = 36
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
 
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_21
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+        test.java.srcDirs += "src/test/kotlin"
+    }
     defaultConfig {
-        minSdk 24
+        minSdk = 24
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'proguard-rules.pro'
     }
@@ -42,9 +54,6 @@ android {
         implementation 'androidx.annotation:annotation:1.9.1'
         implementation "androidx.lifecycle:lifecycle-runtime:2.10.0"
         implementation "org.apache.tika:tika-core:3.2.3"
-    }
-    kotlinOptions {
-        jvmTarget = '21'
     }
 }
 dependencies {
