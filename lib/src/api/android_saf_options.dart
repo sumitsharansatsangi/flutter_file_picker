@@ -49,7 +49,7 @@ final class AndroidSAFOptions {
   /// Defaults to `true`.
   final bool persistGrant;
 
-  Map<String, dynamic> toMap() {
+  Map<String, Object?> toMap() {
     return {
       'grant': grant.name,
       'access': accessMode.name,
