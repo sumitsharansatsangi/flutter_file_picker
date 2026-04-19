@@ -25,11 +25,10 @@ class PlatformFile {
       readStream: readStream,
     );
 
-    if (data.containsKey('safHandle') && data['safHandle'] != null) {
+    if (data case {'safHandle': final Map<String, Object?> safHandle}) {
       return AndroidPlatformFile(
         file: file,
-        safHandle: AndroidSAFHandle.fromMap(
-            Map<String, dynamic>.from(data['safHandle'])),
+        safHandle: AndroidSAFHandle.fromMap(safHandle),
       );
     }
 
