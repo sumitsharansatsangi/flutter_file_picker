@@ -27,7 +27,7 @@ enum AndroidSAFGrant {
 }
 
 /// The configuration options for working with Android's Storage Access Framework.
-/// Only applicable when reading APIs on Android 10+ (API 29+).
+/// Only supported on Android 10+ (API 29+).
 final class AndroidSAFOptions {
   const AndroidSAFOptions({
     this.grant = AndroidSAFGrant.transient,
