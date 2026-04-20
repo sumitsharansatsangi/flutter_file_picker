@@ -124,7 +124,8 @@ class FilePickerDemoView extends StatelessWidget {
                     SizedBox(
                       width: 400,
                       child: DropdownButtonFormField<FileType>(
-                        initialValue: pickingType,
+                        // ignore: deprecated_member_use
+                        value: pickingType,
                         icon: const Icon(Icons.expand_more),
                         alignment: Alignment.centerLeft,
                         decoration: const InputDecoration(
