@@ -45,7 +45,9 @@ final class AndroidSAFOptions {
   /// Defaults to [AndroidSAFAccessMode.readOnly].
   final AndroidSAFAccessMode accessMode;
 
-  /// Whether to automatically execute `takePersistableUriPermission` on the native side.
+  /// Whether to persist the [grant], so that it is preserved across device reboots.
+  ///
+  /// Defaults to `true`.
   /// Defaults to `true`.
   final bool persistGrant;
 
