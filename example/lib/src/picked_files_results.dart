@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 
 import 'file_picker_results.dart';
 
+typedef OnRemoveAndroidFile = void Function(
+  int index,
+  AndroidPlatformFile androidPlatformFile,
+);
+
 class PickedFilesResults extends StatelessWidget {
   const PickedFilesResults({
     super.key,
@@ -11,8 +16,7 @@ class PickedFilesResults extends StatelessWidget {
   });
 
   final List<PlatformFile>? pickedFiles;
-  final void Function(int index, AndroidPlatformFile androidPlatformFile)
-      onRemoveAndroidFile;
+  final OnRemoveAndroidFile onRemoveAndroidFile;
 
   @override
   Widget build(BuildContext context) {
