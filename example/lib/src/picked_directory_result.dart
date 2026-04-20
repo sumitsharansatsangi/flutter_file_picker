@@ -25,10 +25,12 @@ class PickedDirectoryResult extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        final isContentUri = directoryPath.startsWith('content://');
+
         final accessMode = readWriteAccess
             ? AndroidSAFAccessMode.readWrite
             : AndroidSAFAccessMode.readOnly;
-        final Widget? trailingWidget = directoryPath.startsWith('content://')
+        final Widget? trailingWidget = isContentUri
             ? IconButton(
                 icon: const Icon(Icons.delete_forever),
                 onPressed: () {
@@ -43,7 +45,7 @@ class PickedDirectoryResult extends StatelessWidget {
             : null;
 
         return ListTile(
-          title: const Text('Directory path:'),
+          title: Text(isContentUri ? 'Directory URI:' : 'Directory path:'),
           subtitle: Text(directoryPath),
           trailing: trailingWidget,
         );

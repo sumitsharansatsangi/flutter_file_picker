@@ -59,6 +59,215 @@ class FilePickerDemoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fileTypeItems = <DropdownMenuItem<FileType>>[
+      for (final fileType in FileType.values)
+        DropdownMenuItem<FileType>(
+          value: fileType,
+          child: Text(fileType.toString()),
+        ),
+    ];
+
+    final configurationFields = <Widget>[
+      SizedBox(
+        width: 400,
+        child: TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Dialog Title',
+          ),
+          controller: dialogTitleController,
+        ),
+      ),
+      SizedBox(
+        width: 400,
+        child: TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Initial Directory',
+          ),
+          controller: initialDirectoryController,
+        ),
+      ),
+      SizedBox(
+        width: 400,
+        child: TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Default File Name',
+          ),
+          controller: defaultFileNameController,
+        ),
+      ),
+      SizedBox(
+        width: 400,
+        child: DropdownButtonFormField<FileType>(
+          // ignore: deprecated_member_use
+          value: pickingType,
+          icon: const Icon(Icons.expand_more),
+          alignment: Alignment.centerLeft,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          items: fileTypeItems,
+          onChanged: (value) {
+            if (value != null) {
+              onPickingTypeChanged(value);
+            }
+          },
+        ),
+      ),
+      if (pickingType == FileType.custom)
+        SizedBox(
+          width: 400,
+          child: TextFormField(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'File Extension',
+              hintText: 'jpg, png, gif',
+            ),
+            autovalidateMode: AutovalidateMode.always,
+            controller: fileExtensionController,
+            keyboardType: TextInputType.text,
+            maxLength: 15,
+          ),
+        ),
+    ];
+
+    final optionsFields = <Widget>[
+      SizedBox(
+        width: 400.0,
+        child: SwitchListTile.adaptive(
+          title: const Text(
+            'Lock parent window',
+            textAlign: TextAlign.left,
+          ),
+          onChanged: onLockParentWindowChanged,
+          value: lockParentWindow,
+        ),
+      ),
+      ConstrainedBox(
+        constraints: const BoxConstraints.tightFor(width: 400.0),
+        child: SwitchListTile.adaptive(
+          title: const Text(
+            'Pick multiple files',
+            textAlign: TextAlign.left,
+          ),
+          onChanged: onMultiPickChanged,
+          value: multiPick,
+        ),
+      ),
+      ConstrainedBox(
+        constraints: const BoxConstraints.tightFor(width: 400.0),
+        child: SwitchListTile.adaptive(
+          title: const Text(
+            'SAF Persist (Android 10+)',
+            textAlign: TextAlign.left,
+          ),
+          onChanged: supportsSafOptions ? onSafPersistChanged : null,
+          value: safPersist,
+        ),
+      ),
+      ConstrainedBox(
+        constraints: const BoxConstraints.tightFor(width: 400.0),
+        child: SwitchListTile.adaptive(
+          title: const Text(
+            'SAF ReadWrite (Android 10+)',
+            textAlign: TextAlign.left,
+          ),
+          onChanged: supportsSafOptions ? onSafReadWriteChanged : null,
+          value: safReadWrite,
+        ),
+      ),
+    ];
+
+    final actionButtons = <Widget>[
+      SizedBox(
+        width: 120,
+        child: FloatingActionButton.extended(
+          onPressed: onPickFiles,
+          label: Text(multiPick ? 'Pick files' : 'Pick file'),
+          icon: const Icon(Icons.description),
+        ),
+      ),
+      SizedBox(
+        width: 120,
+        child: FloatingActionButton.extended(
+          onPressed: onSelectFolder,
+          label: const Text('Pick folder'),
+          icon: const Icon(Icons.folder),
+        ),
+      ),
+      SizedBox(
+        width: 250,
+        child: FloatingActionButton.extended(
+          onPressed: onPickFileAndDirectoryPaths,
+          label: const Text('Pick files and directories'),
+          icon: const Icon(Icons.folder_open),
+        ),
+      ),
+      SizedBox(
+        width: 120,
+        child: FloatingActionButton.extended(
+          onPressed: onSaveFile,
+          label: const Text('Save file'),
+          icon: const Icon(Icons.save_as),
+        ),
+      ),
+      SizedBox(
+        width: 200,
+        child: FloatingActionButton.extended(
+          onPressed: onClearCachedFiles,
+          label: const Text('Clear temporary files'),
+          icon: const Icon(Icons.delete_forever),
+        ),
+      ),
+    ];
+
+    final loadingIndicator = Row(
+      children: const [
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: 40.0,
+              ),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final userAbortedContent = Row(
+      children: const [
+        Expanded(
+          child: Center(
+            child: SizedBox(
+              width: 300,
+              child: ListTile(
+                leading: Icon(Icons.error_outline),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 40.0,
+                ),
+                title: Text(
+                  'User has aborted the dialog',
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    late final Widget resultsContent;
+    if (isLoading) {
+      resultsContent = loadingIndicator;
+    } else if (userAborted) {
+      resultsContent = userAbortedContent;
+    } else {
+      resultsContent = resultsWidget;
+    }
+
     return MaterialApp(
       scaffoldMessengerKey: scaffoldMessengerKey,
       themeMode: ThemeMode.dark,
@@ -90,79 +299,7 @@ class FilePickerDemoView extends StatelessWidget {
                 Wrap(
                   spacing: 10.0,
                   runSpacing: 10.0,
-                  children: [
-                    SizedBox(
-                      width: 400,
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Dialog Title',
-                        ),
-                        controller: dialogTitleController,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 400,
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Initial Directory',
-                        ),
-                        controller: initialDirectoryController,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 400,
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Default File Name',
-                        ),
-                        controller: defaultFileNameController,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 400,
-                      child: DropdownButtonFormField<FileType>(
-                        // ignore: deprecated_member_use
-                        value: pickingType,
-                        icon: const Icon(Icons.expand_more),
-                        alignment: Alignment.centerLeft,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                        items: FileType.values
-                            .map(
-                              (fileType) => DropdownMenuItem<FileType>(
-                                value: fileType,
-                                child: Text(fileType.toString()),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            onPickingTypeChanged(value);
-                          }
-                        },
-                      ),
-                    ),
-                    pickingType == FileType.custom
-                        ? SizedBox(
-                            width: 400,
-                            child: TextFormField(
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'File Extension',
-                                hintText: 'jpg, png, gif',
-                              ),
-                              autovalidateMode: AutovalidateMode.always,
-                              controller: fileExtensionController,
-                              keyboardType: TextInputType.text,
-                              maxLength: 15,
-                            ),
-                          )
-                        : const SizedBox(),
-                  ],
+                  children: configurationFields,
                 ),
                 const SizedBox(height: 20.0),
                 Wrap(
@@ -172,54 +309,7 @@ class FilePickerDemoView extends StatelessWidget {
                   direction: Axis.horizontal,
                   spacing: 10.0,
                   runSpacing: 10.0,
-                  children: [
-                    SizedBox(
-                      width: 400.0,
-                      child: SwitchListTile.adaptive(
-                        title: const Text(
-                          'Lock parent window',
-                          textAlign: TextAlign.left,
-                        ),
-                        onChanged: onLockParentWindowChanged,
-                        value: lockParentWindow,
-                      ),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.tightFor(width: 400.0),
-                      child: SwitchListTile.adaptive(
-                        title: const Text(
-                          'Pick multiple files',
-                          textAlign: TextAlign.left,
-                        ),
-                        onChanged: onMultiPickChanged,
-                        value: multiPick,
-                      ),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.tightFor(width: 400.0),
-                      child: SwitchListTile.adaptive(
-                        title: const Text(
-                          'SAF Persist (Android 10+)',
-                          textAlign: TextAlign.left,
-                        ),
-                        onChanged:
-                            supportsSafOptions ? onSafPersistChanged : null,
-                        value: safPersist,
-                      ),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.tightFor(width: 400.0),
-                      child: SwitchListTile.adaptive(
-                        title: const Text(
-                          'SAF ReadWrite (Android 10+)',
-                          textAlign: TextAlign.left,
-                        ),
-                        onChanged:
-                            supportsSafOptions ? onSafReadWriteChanged : null,
-                        value: safReadWrite,
-                      ),
-                    ),
-                  ],
+                  children: optionsFields,
                 ),
                 const SizedBox(height: 20.0),
                 const Divider(),
@@ -237,48 +327,7 @@ class FilePickerDemoView extends StatelessWidget {
                   child: Wrap(
                     spacing: 10.0,
                     runSpacing: 10.0,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 120,
-                        child: FloatingActionButton.extended(
-                          onPressed: onPickFiles,
-                          label: Text(multiPick ? 'Pick files' : 'Pick file'),
-                          icon: const Icon(Icons.description),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 120,
-                        child: FloatingActionButton.extended(
-                          onPressed: onSelectFolder,
-                          label: const Text('Pick folder'),
-                          icon: const Icon(Icons.folder),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 250,
-                        child: FloatingActionButton.extended(
-                          onPressed: onPickFileAndDirectoryPaths,
-                          label: const Text('Pick files and directories'),
-                          icon: const Icon(Icons.folder_open),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 120,
-                        child: FloatingActionButton.extended(
-                          onPressed: onSaveFile,
-                          label: const Text('Save file'),
-                          icon: const Icon(Icons.save_as),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 200,
-                        child: FloatingActionButton.extended(
-                          onPressed: onClearCachedFiles,
-                          label: const Text('Clear temporary files'),
-                          icon: const Icon(Icons.delete_forever),
-                        ),
-                      ),
-                    ],
+                    children: actionButtons,
                   ),
                 ),
                 const Divider(),
@@ -291,45 +340,7 @@ class FilePickerDemoView extends StatelessWidget {
                     fontSize: 20,
                   ),
                 ),
-                Builder(
-                  builder: (BuildContext context) => isLoading
-                      ? Row(
-                          children: const [
-                            Expanded(
-                              child: Center(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: 40.0,
-                                  ),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : userAborted
-                          ? Row(
-                              children: const [
-                                Expanded(
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 300,
-                                      child: ListTile(
-                                        leading: Icon(Icons.error_outline),
-                                        contentPadding: EdgeInsets.symmetric(
-                                          vertical: 40.0,
-                                        ),
-                                        title: Text(
-                                          'User has aborted the dialog',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : resultsWidget,
-                ),
+                resultsContent,
                 const SizedBox(height: 10.0),
               ],
             ),
