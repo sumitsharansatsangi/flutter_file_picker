@@ -129,7 +129,6 @@ class AndroidPlatformFile extends PlatformFile {
         );
 
   /// The handle to the Storage Access Framework URI.
-  /// Available if `AndroidSAFOptions` enabled `grant: AndroidSAFGrant.persist`.
   final AndroidSAFHandle safHandle;
 
   @override
