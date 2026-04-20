@@ -19,10 +19,6 @@ class FilePickerDemo extends StatefulWidget {
 }
 
 class _FilePickerDemoState extends State<FilePickerDemo> {
-  static const MethodChannel _androidSafSupportChannel = MethodChannel(
-    'com.mr.flutter.plugins.filepicker/android_saf_support',
-  );
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _defaultFileNameController = TextEditingController();
@@ -66,27 +62,8 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     _fileExtensionController.addListener(
       () => _extension = _fileExtensionController.text,
     );
-    _loadSafSupport();
-  }
-
-  Future<void> _loadSafSupport() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
-      return;
-    }
-
-    try {
-      final sdkInt =
-          await _androidSafSupportChannel.invokeMethod<int>('getSdkInt');
-      if (!mounted) return;
-      setState(() {
-        _supportsSafOptions = (sdkInt ?? 0) >= 29;
-        if (!_supportsSafOptions) {
-          _safPersist = false;
-          _safReadWrite = false;
-        }
-      });
-    } on PlatformException catch (e) {
-      _logException('Unsupported operation: $e');
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      _supportsSafOptions = true;
     }
   }
 
