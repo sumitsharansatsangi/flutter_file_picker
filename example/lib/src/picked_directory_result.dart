@@ -45,7 +45,7 @@ class PickedDirectoryResult extends StatelessWidget {
             : null;
 
         return ListTile(
-          title: Text(isContentUri ? 'Directory URI:' : 'Directory path:'),
+          title: Text(isContentUri ? 'Content URI:' : 'Filesystem path:'),
           subtitle: Text(directoryPath),
           trailing: trailingWidget,
         );
