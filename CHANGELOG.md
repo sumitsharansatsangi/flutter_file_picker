@@ -10,6 +10,16 @@
 - **BREAKING CHANGE**: The minimum supported iOS deployment target is now 14.0.
 - Removed the DKImagePickerController / DKPhotoGallery dependency chain from the Darwin iOS path.
 
+### Android
+- Implemented support for Android Storage Access Framework (SAF) Persistable URI Grants, allowing long-term access to files and directories across device reboots. [#1825](https://github.com/miguelpruivo/flutter_file_picker/issues/1825) [#721](https://github.com/miguelpruivo/flutter_file_picker/issues/721)
+- Added `AndroidSAFOptions` and `AndroidSAFHandle` to configure and manage persistent permissions.
+- Introduced `AndroidPlatformFile` as a subclass of `PlatformFile` to encapsulate SAF-specific metadata.
+- Updated the Android Gradle Wrapper to `8.7` to ensure compatibility with Android Gradle Plugin (AGP) `8.5.1`.
+- Improved `saveFile` naming behavior when a duplicate file exists, normalizing duplicate names to keep the extension suffix (for example, `file (1).bak` instead of `file.bak (1)`). [#1947](https://github.com/miguelpruivo/flutter_file_picker/issues/1947)
+
+### Web
+- Fixed `pickFiles()` default `withData` behavior in the public API to correctly default to `true` on web when not explicitly provided. [#1987](https://github.com/miguelpruivo/flutter_file_picker/issues/1987)
+
 ## 11.0.2
 ### Android
 - Fixed a Path Traversal vulnerability (CWE-22) when resolving file paths from external content providers. [#1967](https://github.com/miguelpruivo/flutter_file_picker/issues/1967)
