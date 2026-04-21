@@ -48,7 +48,6 @@ final class AndroidSAFOptions {
   /// Whether to persist the [grant], so that it is preserved across device reboots.
   ///
   /// Defaults to `true`.
-  /// Defaults to `true`.
   final bool persistGrant;
 
   Map<String, Object?> toMap() {
