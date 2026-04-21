@@ -138,17 +138,13 @@ class FilePickerPlugin : MethodCallHandler, FlutterPlugin,
                 }
                 
                 try {
-                 ...
-                }
-                    try {
-                        val uri = android.net.Uri.parse(uriStr)
-                        val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        activity?.applicationContext?.contentResolver?.releasePersistableUriPermission(uri, flags)
-                    } catch (e: SecurityException) {
-                        // Ignore if we didn't have the permission or it was already released
-                        android.util.Log.e(TAG, "Failed to release SAF permission for $uriStr", e)
-                    }
+                    val uri = android.net.Uri.parse(uriStr)
+                    val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    activity?.applicationContext?.contentResolver?.releasePersistableUriPermission(uri, flags)
+                } catch (e: SecurityException) {
+                    // Ignore if we didn't have the permission or it was already released
+                    android.util.Log.e(TAG, "Failed to release SAF permission for $uriStr", e)
                 }
                 result.success(null)
             }
