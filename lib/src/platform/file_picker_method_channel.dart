@@ -62,7 +62,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
 
   @override
   Future<void> releaseSAFGrant(String uri) async {
-    await methodChannel.invokeMethod('releaseSafHandle', {'uri': uri});
+    await methodChannel.invokeMethod('releaseSafGrant', {'uri': uri});
   }
 
   @override

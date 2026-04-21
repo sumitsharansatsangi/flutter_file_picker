@@ -130,7 +130,7 @@ class FilePickerPlugin : MethodCallHandler, FlutterPlugin,
                 result.success(activity?.applicationContext?.let { clearCache(it) })
             }
 
-            "releaseSafHandle" -> {
+            "releaseSafGrant" -> {
                 val uriStr = arguments?.get("uri") as? String
                 if (uriStr != null) {
                     try {
