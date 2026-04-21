@@ -25,7 +25,8 @@ class PlatformFile {
       readStream: readStream,
     );
 
-    if (data case {'safHandle': final Map<String, Object?> safHandle}) {
+    final safHandle = data['safHandle'];
+    if (safHandle is Map) {
       return AndroidPlatformFile(
         file: file,
         safHandle: AndroidSAFHandle.fromMap(safHandle),
