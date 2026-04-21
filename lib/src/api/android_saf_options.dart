@@ -1,29 +1,19 @@
 /// The access mode that is coupled to an [AndroidSAFGrant].
 enum AndroidSAFAccessMode {
   /// Only allow read permission for a URI.
-  readOnly(0),
+  readOnly,
 
   /// Allow both read and write permissions for a URI.
-  readWrite(1);
-
-  const AndroidSAFAccessMode(this.rawValue);
-
-  /// The raw value of this access mode.
-  final int rawValue;
+  readWrite;
 }
 
 /// The grant type for an Android Storage Access Framework grant.
 enum AndroidSAFGrant {
   /// Grant permission to the requested URI for the current request only.
-  transient(0),
+  transient,
 
   /// Grant permission to the requested URI, until permission is explicitly revoked.
-  lifetime(1);
-
-  const AndroidSAFGrant(this.rawValue);
-
-  /// The raw value of this grant.
-  final int rawValue;
+  lifetime;
 }
 
 /// The configuration options for working with Android's Storage Access Framework.

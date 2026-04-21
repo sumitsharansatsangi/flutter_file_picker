@@ -67,7 +67,7 @@ object FileUtils {
             val accessStr = androidSafOptions?.get("access") as? String
             val autoPersist = (androidSafOptions?.get("autoPersist") as? Boolean) ?: true
             
-            val isPersist = grantStr == "persist"
+            val isPersist = grantStr == "lifetime"
             val isReadWrite = accessStr == "readWrite"
 
             fun maybeTakePersistableUriPermission(uri: Uri) {
