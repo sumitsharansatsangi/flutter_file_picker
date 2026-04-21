@@ -84,14 +84,16 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
         initialDirectory: _initialDirectoryController.text,
         lockParentWindow: _lockParentWindow,
         withData: true,
-        androidSafOptions: AndroidSAFOptions(
-          grant: _safPersist
-              ? AndroidSAFGrant.lifetime
-              : AndroidSAFGrant.transient,
-          accessMode: _safReadWrite
-              ? AndroidSAFAccessMode.readWrite
-              : AndroidSAFAccessMode.readOnly,
-        ),
+        androidSafOptions: (_safPersist || _safReadWrite)
+            ? AndroidSAFOptions(
+                grant: _safPersist
+                    ? AndroidSAFGrant.lifetime
+                    : AndroidSAFGrant.transient,
+                accessMode: _safReadWrite
+                    ? AndroidSAFAccessMode.readWrite
+                    : AndroidSAFAccessMode.readOnly,
+              )
+            : null,
       );
       printInDebug("pickedFiles: $result");
       pickedFiles = result?.files;
@@ -213,14 +215,16 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
         dialogTitle: _dialogTitleController.text,
         initialDirectory: _initialDirectoryController.text,
         lockParentWindow: _lockParentWindow,
-        androidSafOptions: AndroidSAFOptions(
-          grant: _safPersist
-              ? AndroidSAFGrant.lifetime
-              : AndroidSAFGrant.transient,
-          accessMode: _safReadWrite
-              ? AndroidSAFAccessMode.readWrite
-              : AndroidSAFAccessMode.readOnly,
-        ),
+        androidSafOptions: (_safPersist || _safReadWrite)
+            ? AndroidSAFOptions(
+                grant: _safPersist
+                    ? AndroidSAFGrant.lifetime
+                    : AndroidSAFGrant.transient,
+                accessMode: _safReadWrite
+                    ? AndroidSAFAccessMode.readWrite
+                    : AndroidSAFAccessMode.readOnly,
+              )
+            : null,
       );
       hasUserAborted = pickedDirectoryPath == null;
     } on PlatformException catch (e) {
