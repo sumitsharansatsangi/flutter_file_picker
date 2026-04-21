@@ -132,7 +132,14 @@ class FilePickerPlugin : MethodCallHandler, FlutterPlugin,
 
             "releaseSafGrant" -> {
                 val uriStr = arguments?.get("uri") as? String
-                if (uriStr != null) {
+                if (uriStr == null) {
+                  result.success(null)
+                  return
+                }
+                
+                try {
+                 ...
+                }
                     try {
                         val uri = android.net.Uri.parse(uriStr)
                         val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
