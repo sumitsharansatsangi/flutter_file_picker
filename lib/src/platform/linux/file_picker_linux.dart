@@ -80,8 +80,7 @@ class FilePickerLinux extends FilePickerPlatform {
         return null;
       }
       final result = response.results;
-      uriPaths =
-          result["uris"]
+      uriPaths = result["uris"]
               ?.asArray()
               .map((data) => Uri.parse(data.asString()))
               .toList() ??
@@ -93,10 +92,10 @@ class FilePickerLinux extends FilePickerPlatform {
 
     final List<PlatformFile> platformFiles =
         await FilePickerUtils.filePathsToPlatformFiles(
-          filePaths,
-          withReadStream,
-          withData,
-        );
+      filePaths,
+      withReadStream,
+      withData,
+    );
 
     return FilePickerResult(platformFiles);
   }
@@ -139,8 +138,7 @@ class FilePickerLinux extends FilePickerPlatform {
         return null;
       }
       final result = response.results;
-      uriPaths =
-          result["uris"]
+      uriPaths = result["uris"]
               ?.asArray()
               .map((data) => Uri.parse(data.asString()))
               .toList() ??
@@ -196,8 +194,7 @@ class FilePickerLinux extends FilePickerPlatform {
         return null;
       }
       final result = response.results;
-      saveUris =
-          result["uris"]
+      saveUris = result["uris"]
               ?.asArray()
               .map((data) => Uri.parse(data.asString()))
               .toList() ??
