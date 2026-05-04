@@ -48,17 +48,16 @@ class MethodChannelFilePicker extends FilePickerPlatform {
     bool readSequential = false,
     bool cancelUploadOnWindowBlur = true,
     AndroidSAFOptions? androidSafOptions,
-  }) =>
-      _getPath(
-        type,
-        allowMultiple,
-        allowedExtensions,
-        onFileLoading,
-        withData,
-        withReadStream,
-        compressionQuality,
-        androidSafOptions,
-      );
+  }) => _getPath(
+    type,
+    allowMultiple,
+    allowedExtensions,
+    onFileLoading,
+    withData,
+    withReadStream,
+    compressionQuality,
+    androidSafOptions,
+  );
 
   @override
   Future<void> releaseSAFGrant(String uri) async {
