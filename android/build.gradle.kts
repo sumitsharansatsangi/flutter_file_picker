@@ -8,6 +8,11 @@ plugins {
 group "com.mr.flutter.plugin.filepicker"
 version "1.0-SNAPSHOT"
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 android {
     namespace = "com.mr.flutter.plugin.filepicker"
     compileSdk = 37
