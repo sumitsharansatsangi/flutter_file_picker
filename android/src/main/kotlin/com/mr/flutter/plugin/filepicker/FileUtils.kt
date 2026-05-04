@@ -40,13 +40,22 @@ import java.util.Locale
 
 object FileUtils {
     private const val TAG = "FilePickerUtils"
+    private const val MAX_RENAME_ATTEMPTS = 20
+    // On Android, the CSV mime type from getMimeTypeFromExtension() returns
+    // "text/comma-separated-values" which is non-standard and doesn't filter
+    // CSV files in Google Drive.
+    // (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
+    // (see https://android.googlesource.com/platform/frameworks/base/+/61ae88e/core/java/android/webkit/MimeTypeMap.java#439)
+    private const val CSV_EXTENSION = "csv"
+    private const val CSV_MIME_TYPE = "text/csv"
 
     fun FilePickerDelegate.processFiles(
         activity: Activity,
         data: Intent?,
         compressionQuality: Int,
         loadDataToMemory: Boolean,
-        type: String
+        type: String,
+        androidSafOptions: java.util.HashMap<*, *>?
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             if (data == null) {
@@ -54,50 +63,86 @@ object FileUtils {
                 return@launch
             }
 
+            val grantStr = androidSafOptions?.get("grant") as? String
+            val accessStr = androidSafOptions?.get("access") as? String
+            val autoPersist = (androidSafOptions?.get("autoPersist") as? Boolean) ?: true
+            
+            val isPersist = grantStr == "lifetime"
+            val isReadWrite = accessStr == "readWrite"
+
+            val hasSafOptions = androidSafOptions != null
+
+            fun maybeTakePersistableUriPermission(uri: Uri) {
+                 if (isPersist && autoPersist) {
+                     try {
+                         val flags = if (isReadWrite) {
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                         } else {
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                         }
+                         activity.contentResolver.takePersistableUriPermission(uri, flags)
+                     } catch (e: SecurityException) {
+                         Log.e(TAG, "Failed to take persistable URI permission for $uri", e)
+                     }
+                 }
+            }
+
             val files = mutableListOf<FileInfo>()
 
-            when {
-                data.clipData != null -> {
-                    for (i in 0 until data.clipData!!.itemCount) {
-                        var uri = data.clipData!!.getItemAt(i).uri
-                        uri = processUri(activity, uri, compressionQuality)
-                        addFile(activity, uri, loadDataToMemory, files)
-                    }
-                    finishWithSuccess(files)
-                }
-
-                data.data != null -> {
-                    var uri = processUri(activity, data.data!!, compressionQuality)
-
-                    if (type == "dir") {
-                        uri = DocumentsContract.buildDocumentUriUsingTree(
-                            uri,
-                            DocumentsContract.getTreeDocumentId(uri)
-                        )
-                        val dirPath = getFullPathFromTreeUri(uri, activity)
-                        if (dirPath != null) {
-                            finishWithSuccess(dirPath)
-                        } else {
-                            finishWithError("unknown_path", "Failed to retrieve directory path.")
+            try {
+                when {
+                    data.clipData != null -> {
+                        for (i in 0 until data.clipData!!.itemCount) {
+                            var uri = data.clipData!!.getItemAt(i).uri
+                            maybeTakePersistableUriPermission(uri)
+                            uri = processUri(activity, uri, compressionQuality)
+                            addFile(activity, uri, loadDataToMemory, files, hasSafOptions, isReadWrite)
                         }
-                    } else {
-                        addFile(activity, uri, loadDataToMemory, files)
-                        handleFileResult(files)
+                        finishWithSuccess(files)
                     }
-                }
 
-                data.extras?.containsKey("selectedItems") == true -> {
-                    val fileUris = getSelectedItems(data.extras!!)
-                    fileUris?.filterIsInstance<Uri>()?.forEach { uri ->
-                        addFile(activity, uri, loadDataToMemory, files)
+                    data.data != null -> {
+                        var uri = processUri(activity, data.data!!, compressionQuality)
+
+                        if (type == "dir") {
+                            maybeTakePersistableUriPermission(data.data!!)
+                            if (androidSafOptions != null) {
+                                finishWithSuccess(data.data!!.toString())
+                            } else {
+                                uri = DocumentsContract.buildDocumentUriUsingTree(
+                                    uri,
+                                    DocumentsContract.getTreeDocumentId(uri)
+                                )
+                                val dirPath = getFullPathFromTreeUri(uri, activity)
+                                if (dirPath != null) {
+                                    finishWithSuccess(dirPath)
+                                } else {
+                                    finishWithError("unknown_path", "Failed to retrieve directory path.")
+                                }
+                            }
+                        } else {
+                            maybeTakePersistableUriPermission(data.data!!)
+                            addFile(activity, uri, loadDataToMemory, files, hasSafOptions, isReadWrite)
+                            handleFileResult(files)
+                        }
                     }
-                    finishWithSuccess(files)
-                }
 
-                else -> finishWithError(
-                    "unknown_activity",
-                    "Unknown activity error, please fill an issue."
-                )
+                    data.extras?.containsKey("selectedItems") == true -> {
+                        val fileUris = getSelectedItems(data.extras!!)
+                        fileUris?.filterIsInstance<Uri>()?.forEach { uri ->
+                            maybeTakePersistableUriPermission(uri)
+                            addFile(activity, uri, loadDataToMemory, files, hasSafOptions, isReadWrite)
+                        }
+                        finishWithSuccess(files)
+                    }
+
+                    else -> finishWithError(
+                        "unknown_activity",
+                        "Unknown activity error, please fill an issue."
+                    )
+                }
+            } catch (e: Exception) {
+                finishWithError("file_picker_error", e.message ?: "Unknown error")
             }
         }
     }
@@ -124,6 +169,14 @@ object FileUtils {
         }
     }
 
+    /**
+     * Creates and launches an intent for the given file type.
+     *
+     * This method is responsible for creating the appropriate intent based on the type of file
+     * that is requested to be picked.
+     *
+     * This may be either a directory, a regular file, or a gallery pick.
+     */
     fun FilePickerDelegate.startFileExplorer() {
         val intent: Intent
 
@@ -136,7 +189,7 @@ object FileUtils {
             intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         } else {
             if (type == "image/*") {
-                intent = Intent(Intent.ACTION_PICK)
+                intent = Intent(Intent.ACTION_GET_CONTENT)
                 val uri = (Environment.getExternalStorageDirectory().path + File.separator).toUri()
                 intent.setDataAndType(uri, type)
                 intent.type = this.type
@@ -151,21 +204,47 @@ object FileUtils {
                 if (allowedExtensions != null) {
                     intent.putExtra(Intent.EXTRA_MIME_TYPES, allowedExtensions)
                 }
+            }
+            else if (type == "audio/*" ){
+                intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    this.type = this@startFileExplorer.type
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this@startFileExplorer.isMultipleSelection)
+                    putExtra("multi-pick", this@startFileExplorer.isMultipleSelection)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val authority = "com.android.providers.media.documents"
+                        val audioRootUri = DocumentsContract.buildRootUri(authority, "audio_root")
+                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, audioRootUri)
+                    }
+                }
+            } else if(type == "video/*"){
+                intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    this.type = this@startFileExplorer.type
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this@startFileExplorer.isMultipleSelection)
+                    putExtra("multi-pick", this@startFileExplorer.isMultipleSelection)
+                }
+            }
+            else if (type == "media") {
+                intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.type = "*/*"
+                val mimeTypes = arrayOf("image/*", "video/*", "audio/*")
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this.isMultipleSelection)
             } else {
                 intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = this@startFileExplorer.type
+                    if (!allowedExtensions.isNullOrEmpty()) {
+                        putExtra(Intent.EXTRA_MIME_TYPES, allowedExtensions!!.toTypedArray())
+                    } else {
+                        putExtra(Intent.EXTRA_MIME_TYPES, type)
+                    }
                     putExtra(Intent.EXTRA_ALLOW_MULTIPLE, isMultipleSelection)
                     putExtra("multi-pick", isMultipleSelection)
-
-                    allowedExtensions?.let {
-                        putExtra(Intent.EXTRA_MIME_TYPES, it.toTypedArray())
-                    }
                 }
-
             }
-
-
         }
         if (intent.resolveActivity(activity.packageManager) != null) {
             activity.startActivityForResult(intent, REQUEST_CODE)
@@ -178,12 +257,23 @@ object FileUtils {
         }
     }
 
+    /**
+     * Called by the plugin to start a new file explorer activity.
+     *
+     * @param type The file types that will be selectable.
+     * @param isMultipleSelection Whether multiple files can be selected.
+     * @param withData Whether the file data should be loaded into memory.
+     * @param allowedExtensions The allowed file extensions for custom file types.
+     * @param compressionQuality The compression quality for images.
+     * @param result The MethodChannel result to send the file picking result to.
+     */
     fun FilePickerDelegate?.startFileExplorer(
         type: String?,
         isMultipleSelection: Boolean?,
         withData: Boolean?,
-        allowedExtensions: ArrayList<String?>?,
+        allowedExtensions: ArrayList<String>,
         compressionQuality: Int? = 0,
+        androidSafOptions: java.util.HashMap<*, *>?,
         result: MethodChannel.Result
     ) {
         if (this?.setPendingMethodCallResult(result) == false) {
@@ -201,6 +291,7 @@ object FileUtils {
         if (compressionQuality != null) {
             this?.compressionQuality = compressionQuality
         }
+        this?.androidSafOptions = androidSafOptions
 
         this?.startFileExplorer()
     }
@@ -214,15 +305,21 @@ object FileUtils {
     private fun getMimeTypeForBytes(fileName: String?, bytes: ByteArray?): String {
         val tika = Tika()
 
-        if (fileName.isNullOrEmpty()) {
-            return tika.detect(bytes)
-        }
-        val detector = tika.detector
+        val detectedType = if (fileName.isNullOrEmpty()) {
+            tika.detect(bytes)
+        } else {
+            val detector = tika.detector
 
-        val stream = TikaInputStream.get(bytes)
-        val metadata = Metadata()
-        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName)
-        return detector.detect(stream, metadata).toString()
+            val stream = TikaInputStream.get(bytes)
+            val metadata = Metadata()
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName)
+            detector.detect(stream, metadata).toString()
+        }
+        return if (detectedType == "text/plain") {
+            "*/*"
+        } else {
+            detectedType
+        }
     }
 
     fun FilePickerDelegate.saveFile(
@@ -242,11 +339,14 @@ object FileUtils {
             intent.putExtra(Intent.EXTRA_TITLE, fileName)
         }
         this.bytes = bytes
+        this.saveFileName = fileName
         if ("dir" != type) {
             try {
                 intent.type = getMimeTypeForBytes(fileName = fileName, bytes = bytes)
+                this.saveMimeType = intent.type
             } catch (t: Throwable) {
                 intent.type = "*/*"
+                this.saveMimeType = intent.type
                 Log.e(
                     FilePickerDelegate.TAG,
                     "Failed to detect mime type. $t"
@@ -269,6 +369,125 @@ object FileUtils {
         }
     }
 
+    fun maybeRenameGenericMimeDuplicate(
+        context: Context,
+        uri: Uri,
+        originalFileName: String?,
+        mimeType: String?
+    ): Uri {
+        if (originalFileName.isNullOrBlank()) {
+            return uri
+        }
+
+        val extension = originalFileName.substringAfterLast('.', "")
+        if (extension.isBlank()) {
+            return uri
+        }
+
+        val currentName = getFileName(uri, context) ?: return uri
+        val escapedExtension = Regex.escape(extension)
+
+        var (baseName, suffix) = extractBaseNameAndSuffix(currentName, escapedExtension)
+
+        // Clean up baseName if it already has one or more " (M)" suffixes to prevent nesting.
+        val normalized = normalizeBaseNameAndSuffix(baseName, suffix)
+        baseName = normalized.first
+        suffix = normalized.second
+
+        var finalUri = uri
+        var success = false
+        var currentSuffix = suffix ?: 0
+        var attempts = 0
+
+        while (!success && attempts < MAX_RENAME_ATTEMPTS) {
+            val targetName = when {
+                currentSuffix > 0 -> "$baseName ($currentSuffix).$extension"
+                else -> "$baseName.$extension"
+            }
+
+            if (targetName == currentName && attempts == 0) {
+                return uri
+            }
+
+            try {
+                val newUri = DocumentsContract.renameDocument(context.contentResolver, finalUri, targetName)
+                if (newUri != null) {
+                    val actualName = getFileName(newUri, context)
+                    if (actualName == targetName) {
+                        finalUri = newUri
+                        success = true
+                    } else {
+                        // The provider likely auto-suffixed because targetName exists (e.g., "file (1).ext" -> "file (1) (1).ext").
+                        // Update finalUri and increment our suffix to try to find a "clean" one ourselves.
+                        finalUri = newUri
+                        currentSuffix++
+                        attempts++
+                    }
+                } else {
+                    currentSuffix++
+                    attempts++
+                }
+            } catch (ex: Exception) {
+                currentSuffix++
+                attempts++
+                if (attempts >= MAX_RENAME_ATTEMPTS) {
+                    Log.w(
+                        TAG,
+                        "Failed to normalize saved document name from '$currentName' to '$targetName' after $MAX_RENAME_ATTEMPTS attempts. MIME=$mimeType, error=$ex"
+                    )
+                }
+            }
+        }
+
+        return finalUri
+    }
+
+    private fun extractBaseNameAndSuffix(currentName: String, escapedExtension: String): Pair<String, Int?> {
+        // Android duplicate style "name.ext (N)" that we normalize. Example: "report.pdf (1)"
+        val androidCollisionRegex = Regex("^(.*)\\.$escapedExtension \\((\\d+)\\)$")
+        // Desired style "name (N).ext"
+        val normalizedCollisionRegex = Regex("^(.*) \\((\\d+)\\)\\.$escapedExtension$")
+        // Regular "name.ext"
+        val plainNameRegex = Regex("^(.*)\\.$escapedExtension$")
+
+        return when {
+            androidCollisionRegex.matches(currentName) -> {
+                val match = androidCollisionRegex.matchEntire(currentName)!!
+                match.groupValues[1] to match.groupValues[2].toInt()
+            }
+            normalizedCollisionRegex.matches(currentName) -> {
+                val match = normalizedCollisionRegex.matchEntire(currentName)!!
+                match.groupValues[1] to match.groupValues[2].toInt()
+            }
+            plainNameRegex.matches(currentName) -> {
+                val match = plainNameRegex.matchEntire(currentName)!!
+                match.groupValues[1] to null
+            }
+            else -> {
+                currentName to null
+            }
+        }
+    }
+
+    private fun normalizeBaseNameAndSuffix(baseName: String, suffix: Int?): Pair<String, Int?> {
+        var normalizedBaseName = baseName
+        var normalizedSuffix = suffix
+        // Trailing numeric suffix chunk "name (N)" we repeatedly strip and accumulate.
+        // Example: "report (1)" -> base "report", suffix +1
+        val baseNameSuffixRegex = Regex("^(.*) \\((\\d+)\\)$")
+
+        while (true) {
+            val baseMatch = baseNameSuffixRegex.matchEntire(normalizedBaseName) ?: break
+
+            val realBase = baseMatch.groupValues[1]
+            val baseSuffix = baseMatch.groupValues[2].toInt()
+            normalizedBaseName = realBase
+            normalizedSuffix = (normalizedSuffix ?: 0) + baseSuffix
+        }
+
+        return normalizedBaseName to normalizedSuffix
+    }
+
     private fun processUri(activity: Activity, uri: Uri, compressionQuality: Int): Uri {
         return if (compressionQuality > 0 && isImage(activity.applicationContext, uri)) {
             compressImage(uri, compressionQuality, activity.applicationContext)
@@ -281,9 +500,11 @@ object FileUtils {
         activity: Activity,
         uri: Uri,
         loadDataToMemory: Boolean,
-        files: MutableList<FileInfo>
+        files: MutableList<FileInfo>,
+        hasSafOptions: Boolean = false,
+        isReadWrite: Boolean = false
     ) {
-        openFileStream(activity, uri, loadDataToMemory)?.let { file ->
+        openFileStream(activity, uri, loadDataToMemory, hasSafOptions, isReadWrite)?.let { file ->
             files.add(file)
         }
     }
@@ -297,12 +518,12 @@ object FileUtils {
         return bundle.getParcelableArrayList("selectedItems")
     }
 
-    fun getMimeTypes(allowedExtensions: ArrayList<String>?): ArrayList<String?>? {
+    fun getMimeTypes(allowedExtensions: ArrayList<String>?): ArrayList<String> {
         if (allowedExtensions.isNullOrEmpty()) {
-            return null
+            return ArrayList(listOf("*/*"))
         }
 
-        val mimes = ArrayList<String?>()
+        val mimes = ArrayList<String>()
 
         for (i in allowedExtensions.indices) {
             val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
@@ -311,13 +532,21 @@ object FileUtils {
             if (mime == null) {
                 Log.w(
                     TAG,
-                    "Custom file type " + allowedExtensions[i] + " is unsupported and will be ignored."
+                    "Custom file type '" + allowedExtensions[i] + "' is unsupported and will not be filtered."
                 )
-                continue
+                return ArrayList(listOf("*/*"))
             }
 
             mimes.add(mime)
+            if(allowedExtensions[i] == CSV_EXTENSION) {
+                // Add the standard CSV mime type.
+                mimes.add(CSV_MIME_TYPE)
+            }
         }
+        Log.d(
+            TAG,
+            "Custom file types are $allowedExtensions. The mime types were detected as $mimes."
+        )
         return mimes
     }
 
@@ -359,6 +588,7 @@ object FileUtils {
 
         return extension.contentEquals("jpg") || extension.contentEquals("jpeg")
                 || extension.contentEquals("png") || extension.contentEquals("webp")
+                || extension.contentEquals("heic") || extension.contentEquals("heif")
     }
 
     private fun getFileExtension(context: Context, uri: Uri): String? {
@@ -376,20 +606,25 @@ object FileUtils {
         }
     }
 
+    private fun getCompressFormatBasedFileExtension(format: Bitmap.CompressFormat): String {
+        return when (format) {
+            Bitmap.CompressFormat.PNG -> "png"
+            Bitmap.CompressFormat.WEBP -> "webp"
+            else -> "jpeg"
+        }
+    }
+
     @JvmStatic
     fun compressImage(originalImageUri: Uri, compressionQuality: Int, context: Context): Uri {
         val compressedUri: Uri
         try {
             context.contentResolver.openInputStream(originalImageUri).use { imageStream ->
-                val compressedFile = createImageFile(context, originalImageUri)
+                val compressFormat = getCompressFormat(context, originalImageUri)
+                val compressedFile = createImageFile(context, compressFormat)
                 val originalBitmap = BitmapFactory.decodeStream(imageStream)
                 // Compress and save the image
                 val fileOutputStream = FileOutputStream(compressedFile)
-                originalBitmap.compress(
-                    getCompressFormat(context, originalImageUri),
-                    compressionQuality,
-                    fileOutputStream
-                )
+                originalBitmap.compress(compressFormat, compressionQuality, fileOutputStream)
                 fileOutputStream.flush()
                 fileOutputStream.close()
                 compressedUri = Uri.fromFile(compressedFile)
@@ -401,11 +636,11 @@ object FileUtils {
     }
 
     @Throws(IOException::class)
-    private fun createImageFile(context: Context, uri: Uri): File {
+    private fun createImageFile(context: Context, compressFormat: Bitmap.CompressFormat): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "IMAGE_" + timeStamp + "_"
         val storageDir = context.cacheDir
-        return File.createTempFile(imageFileName, "." + getFileExtension(context, uri), storageDir)
+        return File.createTempFile(imageFileName, "." + getCompressFormatBasedFileExtension(compressFormat), storageDir)
     }
 
     /**
@@ -455,7 +690,13 @@ object FileUtils {
     }
 
     @JvmStatic
-    fun openFileStream(context: Context, uri: Uri, withData: Boolean): FileInfo? {
+    fun openFileStream(
+        context: Context, 
+        uri: Uri, 
+        withData: Boolean,
+        hasSafOptions: Boolean = false,
+        isReadWrite: Boolean = false
+    ): FileInfo? {
         var fileInputStream: InputStream? = null
         var fileOutputStream: FileOutputStream? = null
         val fileInfo = FileInfo.Builder()
@@ -465,6 +706,11 @@ object FileUtils {
                 ?: "unamed")
 
         val file = File(path)
+        
+        val safeDir = File(context.cacheDir.absolutePath + "/file_picker/").canonicalPath
+        if (!file.canonicalPath.startsWith(safeDir)) {
+            throw SecurityException("Path traversal detected. Escaping the intended cache directory is not allowed.")
+        }
 
         if (!file.exists()) {
             try {
@@ -505,6 +751,13 @@ object FileUtils {
             .withUri(uri)
             .withSize(file.length())
 
+        if (hasSafOptions) {
+            val safHandleMap = java.util.HashMap<String, Any>()
+            safHandleMap["uri"] = uri.toString()
+            safHandleMap["access"] = if (isReadWrite) "readWrite" else "readOnly"
+            fileInfo.withSafHandle(safHandleMap)
+        }
+
         return fileInfo.build()
     }
 
@@ -529,7 +782,7 @@ object FileUtils {
     }
 
     @JvmStatic
-    fun getFullPathFromTreeUri(treeUri: Uri?, con: Context): String? {
+    fun getFullPathFromTreeUri(treeUri: Uri?, context: Context): String? {
         if (treeUri == null) {
             return null
         }
@@ -542,7 +795,12 @@ object FileUtils {
                 if (docId == "downloads") {
                     return extPath
                 } else if (docId.matches("^ms[df]:.*".toRegex())) {
-                    val fileName = getFileName(treeUri, con)
+                    // Handle "msf:" (Media Store File) and "msd:" (Media Store Directory) prefixes.
+                    // These are commonly seen on Android 10+ (API 29+) when selecting files from the
+                    // "Downloads" category in the system picker.
+                    // Note that this does not happen on all devices.
+                    // Example URI: content://com.android.providers.downloads.documents/document/msf:1000000033
+                    val fileName = getFileName(treeUri, context)
                     return "$extPath/$fileName"
                 } else if (docId.startsWith("raw:")) {
                     return docId.split(":".toRegex()).dropLastWhile { it.isEmpty() }
@@ -551,16 +809,17 @@ object FileUtils {
                 return null
             }
         }
+
         var volumePath = getPathFromTreeUri(treeUri)
 
         if (volumePath.endsWith(File.separator)) {
-            volumePath = volumePath.substring(0, volumePath.length - 1)
+            volumePath = volumePath.dropLast(1)
         }
 
         var documentPath = getDocumentPathFromTreeUri(treeUri)
 
         if (documentPath.endsWith(File.separator)) {
-            documentPath = documentPath.substring(0, documentPath.length - 1)
+            documentPath = documentPath.dropLast(1)
         }
         return if (documentPath.isNotEmpty()) {
             if (volumePath.endsWith(documentPath)) {

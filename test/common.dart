@@ -1,6 +1,6 @@
 import 'dart:io';
 
-setUpTestFiles(
+void setUpTestFiles(
   String appTestFilePath,
   String imageTestFilePath,
   String pdfTestFilePath,
@@ -12,15 +12,11 @@ setUpTestFiles(
   File(
     './test/test_files/franz-michael-schneeberger-unsplash.jpg',
   ).copySync(imageTestFilePath);
-  File(
-    './test/test_files/test.pdf',
-  ).copySync(pdfTestFilePath);
-  File(
-    './test/test_files/test.yml',
-  ).copySync(yamlTestFilePath);
+  File('./test/test_files/test.pdf').copySync(pdfTestFilePath);
+  File('./test/test_files/test.yml').copySync(yamlTestFilePath);
 }
 
-tearDownTestFiles(
+void tearDownTestFiles(
   String appTestFilePath,
   String imageTestFilePath,
   String pdfTestFilePath,

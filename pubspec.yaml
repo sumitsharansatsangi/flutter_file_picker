@@ -4,7 +4,7 @@ homepage: https://github.com/miguelpruivo/plugins_flutter_file_picker
 repository: https://github.com/miguelpruivo/flutter_file_picker
 issue_tracker: https://github.com/miguelpruivo/flutter_file_picker/issues
 publish_to: none
-version: 10.2.0
+version: 12.0.0
 
 dependencies:
   flutter:
@@ -18,9 +18,10 @@ dependencies:
     git: https://github.com/kumsumit/plugin_platform_interface.git
   ffi: ^2.2.0
   path: ^1.9.1
-  win32: ^5.15.0
+  win32: ^6.1.0
   cross_file: ^0.3.5
   web: ^1.1.1
+  dbus: ^0.7.11
 
 dev_dependencies:
   lints: ^6.1.0
@@ -28,8 +29,11 @@ dev_dependencies:
     sdk: flutter
 
 environment:
-  sdk: ">=3.8.1 <4.0.0"
-  flutter: ">=3.32.0"
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.0"
+
+formatter:
+  page_width: 80
 
 flutter:
   plugin:
@@ -37,15 +41,15 @@ flutter:
       android:
         package: com.mr.flutter.plugin.filepicker
         pluginClass: FilePickerPlugin
-        dartPluginClass: FilePickerIO
       ios:
         pluginClass: FilePickerPlugin
-        dartPluginClass: FilePickerIO
+        sharedDarwinSource: true
       web:
         pluginClass: FilePickerWeb
-        fileName: _internal/file_picker_web.dart
+        fileName: src/platform/web/file_picker_web.dart
       macos:
         pluginClass: FilePickerPlugin
+        sharedDarwinSource: true
         dartPluginClass: FilePickerMacOS
       windows:
         dartPluginClass: FilePickerWindows
