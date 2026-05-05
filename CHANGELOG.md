@@ -1,3 +1,7 @@
+## 12.0.0-beta.2
+### Android
+- Added a controlled `out_of_memory` error when picking large files with `withData`, avoiding Android crashes and recommending `withReadStream` as a safer alternative for large or multiple selections. [#1997](https://github.com/miguelpruivo/flutter_file_picker/issues/1997)
+
 ## 12.0.0-beta.1
 ### General
 - Raised the minimum supported Flutter/Dart version to Flutter 3.38 / Dart 3.10 across all platforms. [#1980](https://github.com/miguelpruivo/flutter_file_picker/issues/1980)
