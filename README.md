@@ -76,7 +76,7 @@ See the **[File Picker Wiki](https://github.com/miguelpruivo/flutter_file_picker
 ## Usage
 Quick simple usage example:
 
-### Memory usage recommendation (important)
+### Memory usage recommendation
 When picking multiple or large files on mobile/desktop, avoid loading all bytes in memory (`withData: true`) as it can cause out of memory errors.
 
 Prefer `withReadStream: true` and keep `withData: false`:
