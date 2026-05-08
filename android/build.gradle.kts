@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.3.21"
 }
 
-group "com.mr.flutter.plugin.filepicker"
-version "1.0-SNAPSHOT"
+group = "com.mr.flutter.plugin.filepicker"
+version = "1.0-SNAPSHOT"
 
 repositories {
     google()
@@ -20,7 +20,7 @@ android {
     defaultConfig {
         minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles = 'proguard-rules.pro'
+        consumerProguardFiles("proguard-rules.pro")
     }
 
     compileOptions {
@@ -28,19 +28,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
-
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
         }
+
         getByName("test") {
             java.srcDirs("src/test/kotlin")
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
