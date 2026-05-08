@@ -19,8 +19,8 @@ android {
 
     defaultConfig {
         minSdk = 24
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles 'proguard-rules.pro'
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles = 'proguard-rules.pro'
     }
 
     compileOptions {
@@ -42,15 +42,11 @@ android {
             java.srcDirs("src/test/kotlin")
         }
     }
-
-    lint {
-        disable += ['InvalidPackage']
-    }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.18.0'
-    implementation 'androidx.annotation:annotation:1.10.0'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
-    implementation "org.apache.tika:tika-core:3.3.0"
+    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.annotation:annotation:1.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("org.apache.tika:tika-core:3.3.0")
 }
