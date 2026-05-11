@@ -1,7 +1,7 @@
 ## 12.0.0-beta.2
 ### Android
 - Added a controlled `out_of_memory` error when picking large files with `withData`, avoiding Android crashes and recommending `withReadStream` as a safer alternative for large or multiple selections. [#1997](https://github.com/miguelpruivo/flutter_file_picker/issues/1997)
-- Fixed: Correct MIME type filters and improved image selection (uses ACTION_GET_CONTENT and supplies EXTRA_MIME_TYPES) to prevent non-image files showing when `FileType.image` is selected; updated Android Gradle wrapper and `example/android/settings.gradle.kts`; removed redundant comments in `FilePickerPlugin.kt`. (#2004)
+- Fixed: Correct MIME type filters and improved image selection (uses ACTION_GET_CONTENT and supplies EXTRA_MIME_TYPES) to prevent non-image files showing when `FileType.image` is selected; updated Android Gradle wrapper and `example/android/settings.gradle.kts`; removed redundant comments in `FilePickerPlugin.kt`. [#2004](https://github.com/miguelpruivo/flutter_file_picker/pull/2004)
 
 
 ## 12.0.0-beta.1
