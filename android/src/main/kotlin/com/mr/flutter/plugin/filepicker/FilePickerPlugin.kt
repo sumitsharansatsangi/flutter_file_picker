@@ -189,7 +189,9 @@ class FilePickerPlugin : MethodCallHandler, FlutterPlugin,
                     fileType,
                     arguments?.get("allowMultipleSelection") as Boolean?,
                     arguments?.get("withData") as Boolean?,
-                    getMimeTypes(arguments?.get("allowedExtensions") as ArrayList<String>?),
+                    // Only custom filters should forward additional MIME types.
+                    // Passing */* here broadens predefined filters such as image/*.
+                    arrayListOf(),
                     arguments?.get("compressionQuality") as Int?,
                     androidSafOptions,
                     result
