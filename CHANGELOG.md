@@ -1,10 +1,7 @@
 ## 12.0.0-beta.2
 ### Android
 - Added a controlled `out_of_memory` error when picking large files with `withData`, avoiding Android crashes and recommending `withReadStream` as a safer alternative for large or multiple selections. [#1997](https://github.com/miguelpruivo/flutter_file_picker/issues/1997)
-- Fixed: `FileType.image` allowed selection of non-image files (e.g. `.pdf`) before that change, we could select any type of file with FileType.image type selected, now, ensure MIME type filters are applied correctly.[#2004](https://github.com/miguelpruivo/flutter_file_picker/pull/2004)
-- Fixed: Improved image selection logic to reliably filter images on a wide range of devices and providers. The plugin now uses Intent.ACTION_GET_CONTENT for gallery/image picks and properly supplies MIME type filters (EXTRA_MIME_TYPES) when extensions are provided. This addresses cases where non-image files were shown when `FileType.image` was selected.
-- Chore: updated example Android Gradle wrapper and `example/android/settings.gradle.kts` to align with current Android build tools in the example app.
-- Chore: removed redundant comments in `FilePickerPlugin.kt` that described MIME filtering behaviour to keep the code clearer.
+- Fixed: Correct MIME type filters and improved image selection (uses ACTION_GET_CONTENT and supplies EXTRA_MIME_TYPES) to prevent non-image files showing when `FileType.image` is selected; updated Android Gradle wrapper and `example/android/settings.gradle.kts`; removed redundant comments in `FilePickerPlugin.kt`. (#2004)
 
 
 ## 12.0.0-beta.1

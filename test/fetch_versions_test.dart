@@ -21,7 +21,7 @@ void main() {
 
           // Minor 3.35
           {
-            "version": "3.35.7",
+            "version": "3.38.10",
             "channel": "stable",
             "release_date": "2025-11-12T10:00:00Z",
           },
