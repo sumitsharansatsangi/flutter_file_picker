@@ -29,15 +29,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: subosito/flutter-action@v2.23.0
+      - uses: subosito/flutter-action@v2
+        if: matrix.flutter == 'stable' || matrix.flutter == 'beta'
         with:
-          channel: stable
-          flutter-version-file: pubspec.yaml
+          channel: ${{ matrix.flutter }}
 
-      - uses: subosito/flutter-action@v2.23.0
+      - uses: subosito/flutter-action@v2
+        if: matrix.flutter != 'stable' && matrix.flutter != 'beta'
         with:
-          channel: stable
-          flutter-version-file: pubspec.yaml
+          flutter-version: ${{ matrix.flutter }}
 
       - run: flutter --version
 
@@ -63,10 +63,9 @@ jobs:
     name: Tests & Builds on ${{ matrix.os }} (channel stable)
     steps:
       - uses: actions/checkout@v6
-      - uses: subosito/flutter-action@v2.23.0
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version-file: pubspec.yaml
 
       - run: flutter --version
 
@@ -130,11 +129,9 @@ jobs:
     name: Build Web (example app)
     steps:
       - uses: actions/checkout@v6
-      - uses: subosito/flutter-action@v2.23.0
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version-file: pubspec.yaml
-
       - run: flutter --version
       - name: Install dependencies
         run: flutter pub get
