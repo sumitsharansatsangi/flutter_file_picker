@@ -195,8 +195,7 @@ object FileUtils {
             intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         } else {
             if (type == "image/*") {
-                intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
+                intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     type = this@startFileExplorer.type
                     putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this@startFileExplorer.isMultipleSelection)
                     putExtra("multi-pick", this@startFileExplorer.isMultipleSelection)
