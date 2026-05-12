@@ -138,6 +138,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
 
     try {
       pickedFilesAndDirectories = await FilePicker.pickFileAndDirectoryPaths(
+        dialogTitle: _dialogTitleController.text,
         type: _pickingType,
         allowedExtensions: (_extension?.isNotEmpty ?? false)
             ? _extension?.replaceAll(' ', '').split(',')
