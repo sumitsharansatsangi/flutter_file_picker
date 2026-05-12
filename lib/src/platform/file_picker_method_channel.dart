@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -168,20 +169,46 @@ class MethodChannelFilePicker extends FilePickerPlatform {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Uint8List? bytes,
+    Function(FilePickerStatus)? onFileLoading,
     bool lockParentWindow = false,
-  }) {
+  }) async {
     if (bytes == null) {
       throw ArgumentError(
         'The "bytes" parameter is required on Android & iOS when calling "saveFile".',
       );
     }
 
-    return methodChannel.invokeMethod("save", {
-      "fileName": fileName,
-      "fileType": type.name,
-      "initialDirectory": initialDirectory,
-      "allowedExtensions": allowedExtensions,
-      "bytes": bytes,
-    });
+    try {
+      await _eventSubscription?.cancel();
+      if (onFileLoading != null) {
+        _eventSubscription = eventChannel.receiveBroadcastStream().listen(
+          (data) {
+            if (data is! bool) return;
+            onFileLoading(
+              data ? FilePickerStatus.picking : FilePickerStatus.done,
+            );
+          },
+          onError: (error) => throw Exception(error),
+        );
+      }
+
+      final String? savedPath = await methodChannel.invokeMethod<String>("save", {
+        "fileName": fileName,
+        "fileType": type.name,
+        "initialDirectory": initialDirectory,
+        "allowedExtensions": allowedExtensions,
+        "bytes": bytes,
+      });
+
+      return savedPath;
+    } on PlatformException catch (e) {
+      print('[$_tag] Platform exception: $e');
+      rethrow;
+    } catch (e) {
+      print(
+        '[$_tag] Unsupported operation. Method not found. The exception thrown was: $e',
+      );
+      rethrow;
+    }
   }
 }
