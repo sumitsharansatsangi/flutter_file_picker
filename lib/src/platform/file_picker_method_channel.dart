@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +9,7 @@ import 'package:file_picker/src/api/file_picker_types.dart';
 import 'package:file_picker/src/api/platform_file.dart';
 import 'package:file_picker/src/api/android_saf_options.dart';
 import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
+import 'package:file_picker/src/file_picker_utils.dart';
 
 /// An implementation of [FilePickerPlatform] that uses method channels.
 class MethodChannelFilePicker extends FilePickerPlatform {
@@ -181,6 +181,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
     try {
       await _eventSubscription?.cancel();
       if (onFileLoading != null) {
+        onFileLoading(FilePickerStatus.picking);
         _eventSubscription = eventChannel.receiveBroadcastStream().listen(
           (data) {
             if (data is! bool) return;
@@ -197,8 +198,13 @@ class MethodChannelFilePicker extends FilePickerPlatform {
         "fileType": type.name,
         "initialDirectory": initialDirectory,
         "allowedExtensions": allowedExtensions,
-        "bytes": bytes,
       });
+
+      await FilePickerUtils.saveBytesToFile(bytes, savedPath);
+
+      if (onFileLoading != null) {
+        onFileLoading(FilePickerStatus.done);
+      }
 
       return savedPath;
     } on PlatformException catch (e) {

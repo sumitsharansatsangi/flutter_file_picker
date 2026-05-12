@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 
@@ -93,8 +95,16 @@ class FilePickerUtils {
   /// Does nothing if [path] or [bytes] is null or empty.
   static Future<void> saveBytesToFile(Uint8List? bytes, String? path) async {
     if (path != null && bytes != null && bytes.isNotEmpty) {
-      final file = File(path);
-      await file.writeAsBytes(bytes);
+      final receivePort = ReceivePort();
+      final transferable = TransferableTypedData.fromList([bytes]);
+
+      await Isolate.spawn(_saveBytesIsolateEntry, [receivePort.sendPort, path, transferable]);
+
+      final result = await receivePort.first;
+      receivePort.close();
+      if (result is Map && result['error trying to save file'] != null) {
+        throw result['error trying to save file'];
+      }
     }
   }
 
@@ -108,3 +118,19 @@ class FilePickerUtils {
         (codeUnit >= 97 && codeUnit <= 122); // a-z
   }
 }
+
+// Entry point for the spawned isolate. Args: [SendPort, String path, TransferableTypedData]
+Future<void> _saveBytesIsolateEntry(List<dynamic> args) async {
+  final SendPort send = args[0] as SendPort;
+  final String path = args[1] as String;
+  final TransferableTypedData transferable = args[2] as TransferableTypedData;
+  try {
+    final Uint8List bytes = transferable.materialize().asUint8List();
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    send.send({'result': 'ok'});
+  } catch (e) {
+    send.send({'error trying to save file': e});
+  }
+}
+
