@@ -119,7 +119,6 @@ class FilePickerUtils {
   }
 }
 
-// Entry point for the spawned isolate. Args: [SendPort, String path, TransferableTypedData]
 Future<void> _saveBytesIsolateEntry(List<dynamic> args) async {
   final SendPort send = args[0] as SendPort;
   final String path = args[1] as String;
