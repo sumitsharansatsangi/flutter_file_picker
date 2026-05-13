@@ -252,7 +252,7 @@ object FileUtils {
                 FilePickerDelegate.TAG,
                 "Can't find a valid activity to handle the request. Make sure you've a file explorer installed."
             )
-            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you've a file explorer installed.")
+            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you have a file explorer installed.")
         }
     }
 
@@ -364,7 +364,7 @@ object FileUtils {
                 FilePickerDelegate.TAG,
                 "Can't find a valid activity to handle the request. Make sure you've a file explorer installed."
             )
-            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you've a file explorer installed.")
+            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you have a file explorer installed.")
         }
     }
 
