@@ -150,13 +150,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       }
 
       return FilePickerResult(platformFiles);
-    } on PlatformException catch (e) {
-      print('[$_tag] Platform exception: $e');
-      rethrow;
     } catch (e) {
-      print(
-        '[$_tag] Unsupported operation. Method not found. The exception thrown was: $e',
-      );
       rethrow;
     }
   }
@@ -207,13 +201,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       }
 
       return savedPath;
-    } on PlatformException catch (e) {
-      print('[$_tag] Platform exception: $e');
-      rethrow;
-    } catch (e) {
-      print(
-        '[$_tag] Unsupported operation. Method not found. The exception thrown was: $e',
-      );
+    }catch (e) {
       rethrow;
     }
   }
