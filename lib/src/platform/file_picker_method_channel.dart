@@ -176,23 +176,23 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       await _eventSubscription?.cancel();
       if (onFileLoading != null) {
         onFileLoading(FilePickerStatus.picking);
-        _eventSubscription = eventChannel.receiveBroadcastStream().listen(
-          (data) {
-            if (data is! bool) return;
-            onFileLoading(
-              data ? FilePickerStatus.picking : FilePickerStatus.done,
-            );
-          },
-          onError: (error) => throw Exception(error),
-        );
+        _eventSubscription = eventChannel.receiveBroadcastStream().listen((
+          data,
+        ) {
+          if (data is! bool) return;
+          onFileLoading(
+            data ? FilePickerStatus.picking : FilePickerStatus.done,
+          );
+        }, onError: (error) => throw Exception(error));
       }
 
-      final String? savedPath = await methodChannel.invokeMethod<String>("save", {
-        "fileName": fileName,
-        "fileType": type.name,
-        "initialDirectory": initialDirectory,
-        "allowedExtensions": allowedExtensions,
-      });
+      final String? savedPath = await methodChannel
+          .invokeMethod<String>("save", {
+            "fileName": fileName,
+            "fileType": type.name,
+            "initialDirectory": initialDirectory,
+            "allowedExtensions": allowedExtensions,
+          });
 
       await FilePickerUtils.saveBytesToFile(bytes, savedPath);
 
@@ -201,7 +201,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       }
 
       return savedPath;
-    }catch (e) {
+    } catch (e) {
       rethrow;
     }
   }

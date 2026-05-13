@@ -98,7 +98,11 @@ class FilePickerUtils {
       final receivePort = ReceivePort();
       final transferable = TransferableTypedData.fromList([bytes]);
 
-      await Isolate.spawn(_saveBytesIsolateEntry, [receivePort.sendPort, path, transferable]);
+      await Isolate.spawn(_saveBytesIsolateEntry, [
+        receivePort.sendPort,
+        path,
+        transferable,
+      ]);
 
       final result = await receivePort.first;
       receivePort.close();
@@ -122,7 +126,11 @@ class FilePickerUtils {
 Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
   // Decode expected message shape using pattern matching to avoid explicit
   // casts. Expected: [SendPort send, String path, TransferableTypedData transferable]
-  if (args case [SendPort send, String path, TransferableTypedData transferable]) {
+  if (args case [
+    SendPort send,
+    String path,
+    TransferableTypedData transferable,
+  ]) {
     try {
       final Uint8List bytes = transferable.materialize().asUint8List();
       final file = File(path);
