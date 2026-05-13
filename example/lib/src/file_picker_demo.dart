@@ -67,6 +67,15 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     }
   }
 
+  @override
+  void dispose() {
+    _defaultFileNameController.dispose();
+    _dialogTitleController.dispose();
+    _initialDirectoryController.dispose();
+    _fileExtensionController.dispose();
+    super.dispose();
+  }
+
   void _pickFiles() async {
     bool hasUserAborted = true;
     _resetState();
