@@ -119,17 +119,25 @@ class FilePickerUtils {
   }
 }
 
-Future<void> _saveBytesIsolateEntry(List<dynamic> args) async {
-  final SendPort send = args[0] as SendPort;
-  final String path = args[1] as String;
-  final TransferableTypedData transferable = args[2] as TransferableTypedData;
-  try {
-    final Uint8List bytes = transferable.materialize().asUint8List();
-    final file = File(path);
-    await file.writeAsBytes(bytes);
-    send.send({'result': 'ok'});
-  } catch (e) {
-    send.send({'error trying to save file': e});
+Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
+  // Decode expected message shape using pattern matching to avoid explicit
+  // casts. Expected: [SendPort send, String path, TransferableTypedData transferable]
+  if (args case [SendPort send, String path, TransferableTypedData transferable]) {
+    try {
+      final Uint8List bytes = transferable.materialize().asUint8List();
+      final file = File(path);
+      await file.writeAsBytes(bytes);
+      send.send(true);
+    } catch (e) {
+      send.send(e);
+    }
+    return;
+  }
+
+  if (args.isNotEmpty && args[0] is SendPort) {
+    final Object? first = args[0];
+    if (first is SendPort) {
+      first.send(Exception('Invalid isolate arguments'));
+    }
   }
 }
-
