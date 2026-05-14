@@ -106,7 +106,9 @@ class FilePickerUtils {
 
       final result = await receivePort.first;
       receivePort.close();
-      if (result is Map && result['error trying to save file'] != null) {
+      if (result is Exception) {
+        throw result;
+      }
         throw result['error trying to save file'];
       }
     }
