@@ -111,7 +111,6 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       );
     }
     try {
-      await _eventSubscription?.cancel();
       if (onFileLoading != null) {
         _eventSubscription = eventChannel.receiveBroadcastStream().listen((
           data,
@@ -152,6 +151,8 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       return FilePickerResult(platformFiles);
     } catch (e) {
       rethrow;
+    } finally {
+      await _eventSubscription?.cancel();
     }
   }
 
@@ -173,7 +174,6 @@ class MethodChannelFilePicker extends FilePickerPlatform {
     }
 
     try {
-      await _eventSubscription?.cancel();
       if (onFileLoading != null) {
         onFileLoading(FilePickerStatus.picking);
         _eventSubscription = eventChannel.receiveBroadcastStream().listen((
@@ -203,6 +203,8 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       return savedPath;
     } catch (e) {
       rethrow;
+    } finally {
+      await _eventSubscription?.cancel();
     }
   }
 }
