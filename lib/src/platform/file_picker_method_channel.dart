@@ -153,6 +153,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
       rethrow;
     } finally {
       await _eventSubscription?.cancel();
+      _eventSubscription = null;
     }
   }
 
