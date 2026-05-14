@@ -123,6 +123,10 @@ class FilePickerUtils {
   }
 }
 
+/// Save the given bytes to a file, using a separate [Isolate].
+///
+/// The [args] is expected to contain a [SendPort], the [String] file path
+/// and the [TransferableTypedData] bytes, in this order.
 Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
   // Decode expected message shape using pattern matching to avoid explicit
   // casts. Expected: [SendPort send, String path, TransferableTypedData transferable]
@@ -135,7 +139,7 @@ Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
       final Uint8List bytes = transferable.materialize().asUint8List();
       final file = File(path);
       await file.writeAsBytes(bytes);
-      send.send(true);
+      send.send(null);
     } catch (e) {
       send.send(e);
     }
