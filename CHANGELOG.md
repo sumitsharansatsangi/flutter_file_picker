@@ -1,4 +1,9 @@
 ## 12.0.0-beta.3
+### General
+- Added `onFileLoading` callback to `saveFile` and implemented status tracking via an event channel. `saveFile` now reports loading status (for example `FilePickerStatus.loading` and `FilePickerStatus.done`).
+- Offloaded file saving (writing bytes) to a background isolate to avoid blocking the UI when saving large files.
+- Ensured the event subscription used for loading status is always cancelled in a `finally` block to prevent leaks and spurious events.
+
 ### Android
 - Fixed Android plugin registration when using AGP 9+ with `android.builtInKotlin=false`, while preserving support for older AGP setups.
 

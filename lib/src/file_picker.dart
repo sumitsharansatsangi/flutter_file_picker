@@ -220,6 +220,7 @@ abstract final class FilePicker {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Uint8List? bytes,
+    Function(FilePickerStatus)? onFileLoading,
     bool lockParentWindow = false,
   }) {
     return FilePickerPlatform.instance.saveFile(
@@ -229,6 +230,7 @@ abstract final class FilePicker {
       type: type,
       allowedExtensions: allowedExtensions,
       bytes: bytes,
+      onFileLoading: onFileLoading,
       lockParentWindow: lockParentWindow,
     );
   }
