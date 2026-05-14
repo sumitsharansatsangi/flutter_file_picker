@@ -146,10 +146,7 @@ Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
     return;
   }
 
-  if (args.isNotEmpty && args[0] is SendPort) {
-    final Object? first = args[0];
-    if (first is SendPort) {
-      first.send(Exception('Invalid isolate arguments'));
-    }
+  if (args case [final SendPort port, ...]) {
+    port.send(Exception('Invalid isolate arguments'));
   }
 }
