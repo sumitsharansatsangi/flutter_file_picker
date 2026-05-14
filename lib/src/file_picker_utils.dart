@@ -139,7 +139,7 @@ Future<void> _saveBytesIsolateEntry(List<Object?> args) async {
       final Uint8List bytes = transferable.materialize().asUint8List();
       final file = File(path);
       await file.writeAsBytes(bytes);
-      send.send(true);
+      send.send(null);
     } catch (e) {
       send.send(e);
     }
