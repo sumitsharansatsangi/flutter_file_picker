@@ -1,3 +1,20 @@
+## 12.0.0-beta.3
+### General
+- Added `onFileLoading` callback to `saveFile` and implemented status tracking via an event channel. `saveFile` now reports loading status (for example `FilePickerStatus.loading` and `FilePickerStatus.done`).
+- Offloaded file saving (writing bytes) to a background isolate to avoid blocking the UI when saving large files.
+- Ensured the event subscription used for loading status is always cancelled in a `finally` block to prevent leaks and spurious events.
+
+### Android
+- Fixed Android plugin registration when using AGP 9+ with `android.builtInKotlin=false`, while preserving support for older AGP setups.
+
+## 12.0.0-beta.2
+### General
+- Updated dependencies: `flutter_plugin_android_lifecycle` to `2.0.34`, `path` to `1.9.1`, `win32` to `6.2.0`, `cross_file` to `0.3.5+2`, `web` to `1.1.1`, and `dbus` to `0.7.12`.
+
+### Android
+- Added a controlled `out_of_memory` error when picking large files with `withData`, avoiding Android crashes and recommending `withReadStream` as a safer alternative for large or multiple selections. [#1997](https://github.com/miguelpruivo/flutter_file_picker/issues/1997)
+**Breaking Change**: `FileType.image` now opens the native image gallery instead of the document picker, ignoring `allowedExtensions` on Android. [#2004](https://github.com/miguelpruivo/flutter_file_picker/pull/2004)
+
 ## 12.0.0-beta.1
 ### General
 - Raised the minimum supported Flutter/Dart version to Flutter 3.38 / Dart 3.10 across all platforms. [#1980](https://github.com/miguelpruivo/flutter_file_picker/issues/1980)

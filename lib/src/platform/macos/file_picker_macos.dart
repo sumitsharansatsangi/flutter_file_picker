@@ -19,6 +19,7 @@ class FilePickerMacOS extends FilePickerPlatform {
 
   @override
   Future<List<String>?> pickFileAndDirectoryPaths({
+    String? dialogTitle,
     String? initialDirectory,
     FileType type = FileType.any,
     List<String>? allowedExtensions,
@@ -30,6 +31,9 @@ class FilePickerMacOS extends FilePickerPlatform {
       <String, dynamic>{
         'allowedExtensions': fileFilter,
         'initialDirectory': escapeInitialDirectory(initialDirectory),
+        'dialogTitle': dialogTitle == null
+            ? null
+            : escapeDialogTitle(dialogTitle),
       },
     );
 
@@ -57,6 +61,7 @@ class FilePickerMacOS extends FilePickerPlatform {
     final filePaths = await methodChannel
         .invokeListMethod<String>('pickFiles', <String, dynamic>{
           'allowedExtensions': fileFilter,
+          'dialogTitle': dialogTitle,
           'initialDirectory': escapeInitialDirectory(initialDirectory),
           'allowMultiple': allowMultiple,
         });
@@ -99,6 +104,7 @@ class FilePickerMacOS extends FilePickerPlatform {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Uint8List? bytes,
+    Function(FilePickerStatus)? onFileLoading,
     bool lockParentWindow = false,
   }) async {
     final fileFilter = fileTypeToFileFilter(type, allowedExtensions);

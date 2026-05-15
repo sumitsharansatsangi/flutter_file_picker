@@ -50,6 +50,7 @@ abstract class FilePickerPlatform extends PlatformInterface {
   /// Displays a dialog that allows the user to select both files and
   /// directories simultaneously, returning their absolute paths.
   Future<List<String>?> pickFileAndDirectoryPaths({
+    String? dialogTitle,
     String? initialDirectory,
     FileType type = FileType.any,
     List<String>? allowedExtensions,
@@ -88,6 +89,7 @@ abstract class FilePickerPlatform extends PlatformInterface {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Uint8List? bytes,
+    Function(FilePickerStatus)? onFileLoading,
     bool lockParentWindow = false,
   }) async {
     throw UnimplementedError('saveFile() has not been implemented.');

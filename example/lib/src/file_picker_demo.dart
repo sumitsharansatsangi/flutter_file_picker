@@ -29,6 +29,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
   bool _lockParentWindow = false;
   bool _userAborted = false;
   bool _multiPick = false;
+  bool _withData = true;
   bool _safPersist = false;
   bool _safReadWrite = false;
   bool _supportsSafOptions = false;
@@ -66,6 +67,15 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     }
   }
 
+  @override
+  void dispose() {
+    _defaultFileNameController.dispose();
+    _dialogTitleController.dispose();
+    _initialDirectoryController.dispose();
+    _fileExtensionController.dispose();
+    super.dispose();
+  }
+
   void _pickFiles() async {
     bool hasUserAborted = true;
     _resetState();
@@ -83,7 +93,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
         dialogTitle: _dialogTitleController.text,
         initialDirectory: _initialDirectoryController.text,
         lockParentWindow: _lockParentWindow,
-        withData: true,
+        withData: _withData,
         androidSafOptions: (_safPersist || _safReadWrite)
             ? AndroidSAFOptions(
                 grant: _safPersist
@@ -137,6 +147,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
 
     try {
       pickedFilesAndDirectories = await FilePicker.pickFileAndDirectoryPaths(
+        dialogTitle: _dialogTitleController.text,
         type: _pickingType,
         allowedExtensions: (_extension?.isNotEmpty ?? false)
             ? _extension?.replaceAll(' ', '').split(',')
@@ -409,6 +420,29 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
           value: _multiPick,
         ),
       ),
+      ConstrainedBox(
+        constraints: const BoxConstraints.tightFor(width: 400.0),
+        child: SwitchListTile.adaptive(
+          title: const Text('Load file data to memory (withData)'),
+          subtitle: const Text(
+            'Disable this for large or multiple files. Prefer withReadStream.',
+          ),
+          onChanged: (value) => setState(() => _withData = value),
+          value: _withData,
+        ),
+      ),
+      if (_multiPick && _withData)
+        const SizedBox(
+          width: 400.0,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.warning_amber_rounded, color: Colors.amber),
+            title: Text('Large multi-picks may run out of memory'),
+            subtitle: Text(
+              'Use withData = false and withReadStream for safety.',
+            ),
+          ),
+        ),
       ConstrainedBox(
         constraints: const BoxConstraints.tightFor(width: 400.0),
         child: SwitchListTile.adaptive(

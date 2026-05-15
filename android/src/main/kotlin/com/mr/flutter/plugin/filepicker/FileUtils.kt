@@ -141,6 +141,12 @@ object FileUtils {
                         "Unknown activity error, please fill an issue."
                     )
                 }
+            } catch (oom: OutOfMemoryError) {
+                Log.e(TAG, "Out of memory while processing selected files.", oom)
+                finishWithError(
+                    "out_of_memory",
+                    "Selected files are too large to load into memory. Disable withData or use withReadStream."
+                )
             } catch (e: Exception) {
                 finishWithError("file_picker_error", e.message ?: "Unknown error")
             }
@@ -189,20 +195,13 @@ object FileUtils {
             intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         } else {
             if (type == "image/*") {
-                intent = Intent(Intent.ACTION_GET_CONTENT)
-                val uri = (Environment.getExternalStorageDirectory().path + File.separator).toUri()
-                intent.setDataAndType(uri, type)
-                intent.type = this.type
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this.isMultipleSelection)
-                intent.putExtra("multi-pick", this.isMultipleSelection)
-
-                type?.takeIf { it.contains(",") }
-                    ?.split(",")
-                    ?.filter { it.isNotEmpty() }
-                    ?.let { allowedExtensions = ArrayList(it) }
-
-                if (allowedExtensions != null) {
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES, allowedExtensions)
+                intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    type = this@startFileExplorer.type
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, this@startFileExplorer.isMultipleSelection)
+                    putExtra("multi-pick", this@startFileExplorer.isMultipleSelection)
+                    if (!allowedExtensions.isNullOrEmpty()) {
+                        putExtra(Intent.EXTRA_MIME_TYPES, allowedExtensions!!.toTypedArray())
+                    }
                 }
             }
             else if (type == "audio/*" ){
@@ -253,7 +252,7 @@ object FileUtils {
                 FilePickerDelegate.TAG,
                 "Can't find a valid activity to handle the request. Make sure you've a file explorer installed."
             )
-            finishWithError("invalid_format_type", "Can't handle the provided file type.")
+            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you have a file explorer installed.")
         }
     }
 
@@ -365,7 +364,7 @@ object FileUtils {
                 FilePickerDelegate.TAG,
                 "Can't find a valid activity to handle the request. Make sure you've a file explorer installed."
             )
-            finishWithError("invalid_format_type", "Can't handle the provided file type.")
+            finishWithError("explorer_not_found", "Can't find a valid activity to handle the request. Make sure you have a file explorer installed.")
         }
     }
 

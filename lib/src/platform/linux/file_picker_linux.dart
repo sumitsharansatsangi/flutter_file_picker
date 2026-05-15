@@ -164,6 +164,7 @@ class FilePickerLinux extends FilePickerPlatform {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Uint8List? bytes,
+    Function(FilePickerStatus)? onFileLoading,
     bool lockParentWindow = false,
   }) async {
     Map<String, DBusValue> xdpOption = {
